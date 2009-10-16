@@ -105,7 +105,7 @@ class Piece_Unity_Plugin_Renderer_HTML_CompatibilityTests extends PHPUnit_TestCa
         $config = &$this->_getConfig();
         $context->setConfiguration($config);
 
-        $this->assertEquals("This is a test for rendering dynamic pages.\nThis is a dynamic content.", $this->_render());
+        $this->assertEquals($this->_normalizeNewlines("This is a test for rendering dynamic pages.\nThis is a dynamic content."), $this->_normalizeNewlines($this->_render()));
     }
 
     function testRelativePathVulnerability()
@@ -178,12 +178,12 @@ if (\$code == E_USER_WARNING) {
         $config->setConfiguration("Renderer_{$this->_target}", 'layoutCompileDirectory', "{$this->_cacheDirectory}/compiled-templates/Layout");
         $context->setConfiguration($config);
 
-        $this->assertEquals('<html>
+        $this->assertEquals($this->_normalizeNewlines('<html>
   <body>
     <h1>This is an element for the layout.</h1>
     This is an element for the content.
   </body>
-</html>', trim($this->_render()));
+</html>'), $this->_normalizeNewlines(trim($this->_render())));
     }
 
     function testTurnOffLayoutByHTTPAcceptSuccess()
@@ -222,11 +222,12 @@ if (\$code == E_USER_WARNING) {
         $output = $this->_render();
         restore_error_handler();
 
-        $this->assertEquals('<html>
+        $this->assertEquals(
+$this->_normalizeNewlines('<html>
   <body>
     <p>This is a test for fallback.</p>
   </body>
-</html>', rtrim($output));
+</html>'), $this->_normalizeNewlines(rtrim($output)));
         $this->assertFalse(Piece_Unity_Error::hasErrors());
         $this->assertTrue($GLOBALS['PIECE_UNITY_Plugin_Renderer_HTML_CompatibilityTests_hasWarnings']);
 
@@ -308,7 +309,7 @@ if (\$code == E_USER_WARNING) {
         $context->setConfiguration($config);
         $_SERVER['HTTP_ACCEPT'] = 'application/x-piece-html-fragment';
 
-        $this->assertEquals($result, rtrim($this->_render()));
+        $this->assertEquals($this->_normalizeNewlines($result), $this->_normalizeNewlines(rtrim($this->_render())));
 
         unset($_SERVER['HTTP_ACCEPT']);
     }
@@ -338,7 +339,10 @@ if (\$code == E_USER_WARNING) {
      */
     function &_getConfigForLayeredStructure() {}
 
-    /**#@-*/
+    function _normalizeNewlines($string)
+    {
+        return preg_replace('/\x0D\x0A|\x0D|\x0A/', PHP_EOL, $string);
+    }
 
     // }}}
 }
