@@ -264,7 +264,6 @@ class Piece_Unity_URI
             && !preg_match('/^https?/', $path)
             && !$context->usingProxy()
             ) {
-            $path = $context->getAppRootPath() . $path;
         }
 
         $this->_url = &new Net_URL($path);

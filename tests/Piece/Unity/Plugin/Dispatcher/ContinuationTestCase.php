@@ -654,6 +654,54 @@ class Piece_Unity_Plugin_Dispatcher_ContinuationTestCase extends PHPUnit_TestCas
     /**
      * @since Method available since Release 1.5.0
      */
+    function testShouldCreateAUriObjectBasedOnTheActiveFlowExecutionWithAppRootPath()
+    {
+        $_SERVER['SERVER_NAME'] = 'example.org';
+        $_SERVER['SERVER_PORT'] = '80';
+        $oldScriptName = @$_SERVER['REQUEST_URI'];
+        $_SERVER['REQUEST_URI'] = '/foo/entry/new.php';
+        $config = &new Piece_Unity_Config();
+        $config->setConfiguration('Dispatcher_Continuation', 'actionDirectory', $this->_cacheDirectory);
+        $config->setConfiguration('Dispatcher_Continuation', 'configDirectory', $this->_cacheDirectory);
+        $config->setConfiguration('Dispatcher_Continuation', 'cacheDirectory', $this->_cacheDirectory);
+        $config->setConfiguration('Dispatcher_Continuation', 'useFlowMappings', true);
+        $config->setConfiguration('Dispatcher_Continuation',
+                                  'flowMappings',
+                                  array(array('uri' => $_SERVER['REQUEST_URI'],
+                                              'flowName' => 'Entry_New',
+                                              'isExclusive' => false))
+                                  );
+        $context = &Piece_Unity_Context::singleton();
+        $context->setConfiguration($config);
+        $context->setAppRootPath('/foo');
+        $session = &$context->getSession();
+        @$session->start();
+        $dispatcher = &new Piece_Unity_Plugin_Dispatcher_Continuation();
+        $dispatcher->invoke();
+        $uri = &$context->getAttribute('uri');
+        $uri2 = &Piece_Unity_Service_Continuation::createURI('qux');
+
+        $this->assertEquals(strtolower('Piece_Unity_URI'),
+                            strtolower(get_class($uri))
+                            );
+        $this->assertRegExp('!^http://example\.org/foo/entry/new\.php\?_flowExecutionTicket=[0-9a-f]{40}&_event=baz$!',
+                            $uri->getURI()
+                            );
+        $this->assertEquals(strtolower('Piece_Unity_URI'),
+                            strtolower(get_class($uri2))
+                            );
+        $this->assertRegExp('!^http://example\.org/foo/entry/new\.php\?_flowExecutionTicket=[0-9a-f]{40}&_event=qux$!',
+                            $uri2->getURI()
+                            );
+
+        $_SERVER['REQUEST_URI'] = $oldScriptName;
+        unset($_SERVER['SERVER_PORT']);
+        unset($_SERVER['SERVER_NAME']);
+    }
+
+    /**
+     * @since Method available since Release 1.5.0
+     */
     function testShouldCreateAUriObjectBasedOnAGivenPathAndFlowExecutionTicket()
     {
         $_SERVER['SERVER_NAME'] = 'example.org';
